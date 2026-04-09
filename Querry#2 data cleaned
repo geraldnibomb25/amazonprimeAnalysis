@@ -1,0 +1,57 @@
+SELECT
+  -- Time features
+  TIMESTAMP_DIFF(ended_at, started_at, MILLISECOND)            AS scrape_duration_ms,
+  TIMESTAMP_DIFF(ended_at, started_at, MILLISECOND) / 1000.0    AS scrape_duration_seconds,
+  EXTRACT(HOUR     FROM started_at)                              AS scrape_hour_utc,
+  EXTRACT(DAYOFWEEK FROM started_at)                              AS scrape_day_of_week,
+  DATE(started_at)                                                AS scrape_date,
+  EXTRACT(ISOWEEK   FROM started_at)                              AS scrape_week,
+  EXTRACT(MONTH     FROM started_at)                              AS scrape_month,
+  EXTRACT(DAYOFWEEK FROM started_at) IN (1,7)                    AS is_weekend,
+
+  -- URL features
+  REGEXP_EXTRACT(source_url, r'^(https?)')                     AS url_scheme,
+  NET.REG_DOMAIN(source_url)                                      AS url_host,
+  NET.HOST(source_url)                                            AS url_host_full,
+  REGEXP_EXTRACT(source_url, r'^https?://[^/]*(/.*)$')           AS url_path,
+  ARRAY_LENGTH(SPLIT(TRIM(REGEXP_EXTRACT(source_url,
+    r'^https?://[^/]*(/.*)$'), '/'), '/'))                       AS url_path_depth,
+  SPLIT(TRIM(REGEXP_EXTRACT(source_url,
+    r'^https?://[^/]*(/.*)$'), '/'), '/')[SAFE_OFFSET(0)]       AS url_path_root,
+  source_url LIKE '%?%'                                           AS url_has_query_params,
+
+  -- Performance features
+  TIMESTAMP_DIFF(ended_at, started_at, MILLISECOND) > 10000       AS is_slow_scrape,
+  cache_state = 'hit'                                             AS is_cache_hit,
+  status = 'success' AND status_code BETWEEN 200 AND 299          AS is_success,
+  CONCAT(CAST(status_code / 100 AS STRING), 'xx')               AS http_status_class,
+
+  -- Quality flags
+  (og_title IS NOT NULL OR og_description IS NOT NULL)            AS has_og_metadata,
+  og_image IS NOT NULL                                            AS has_og_image,
+  page_title = og_title                                            AS title_matches_og_title,
+  REGEXP_EXTRACT(language, r'^([a-z]{2,3})')                     AS language_code,
+  REGEXP_EXTRACT(language, r'-([A-Z]{2})$')                      AS language_region,
+  REGEXP_EXTRACT(content_type, r'^([^;]+)')                      AS content_type_clean,
+  UPPER(REGEXP_EXTRACT(content_type, r'charset=([^\s;]+)'))     AS charset,
+
+  -- Text / SEO features
+  LENGTH(page_title)                                               AS page_title_length,
+  LENGTH(page_description)                                         AS page_description_length,
+  ARRAY_LENGTH(SPLIT(TRIM(page_title), ' '))                    AS title_word_count,
+  page_title LIKE '%:%'                                           AS has_colon_in_title,
+  LENGTH(page_title) BETWEEN 30 AND 60                             AS title_is_seo_optimal,
+  LENGTH(page_description) BETWEEN 70 AND 160                    AS description_is_seo_optimal,
+  NET.HOST(og_image)                                              AS og_image_domain,
+  NET.HOST(og_image) != NET.HOST(source_url)                     AS og_image_is_cdn,
+
+  -- Categoricals
+  LOWER(og_type)                                                   AS og_type_clean,
+  LOWER(status)                                                    AS scrape_status,
+  SPLIT(timezone, '/')[SAFE_OFFSET(0)]                           AS timezone_region,
+  SPLIT(timezone, '/')[SAFE_OFFSET(1)]                           AS timezone_city,
+
+  -- All original columns
+  *
+
+FROM `primevidata1.videoprime`
