@@ -1,0 +1,221 @@
+
+<style>
+  body { margin: 0; }
+  .wrap { padding: 12px 0; font-family: var(--font-sans); color: var(--color-text-primary); }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--color-border-secondary); background: transparent; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); transition: all .15s; }
+  .tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); font-weight: 500; }
+  .section { display: none; }
+  .section.active { display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border-tertiary); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--color-border-tertiary); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .col-name { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-info); white-space: nowrap; }
+  .dtype { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--color-background-secondary); color: var(--color-text-secondary); font-family: var(--font-mono); white-space: nowrap; }
+  .desc { color: var(--color-text-secondary); font-size: 12px; line-height: 1.5; }
+  .example { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  .badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 4px; font-weight: 500; }
+  .b-time { background: #E1F5EE; color: #0F6E56; }
+  .b-url  { background: #E6F1FB; color: #185FA5; }
+  .b-perf { background: #FAEEDA; color: #854F0B; }
+  .b-qual { background: #FBEAF0; color: #993556; }
+  .b-cat  { background: #EEEDFE; color: #534AB7; }
+  .b-text { background: #EAF3DE; color: #3B6D11; }
+  @media (prefers-color-scheme: dark) {
+    .b-time { background: #085041; color: #9FE1CB; }
+    .b-url  { background: #0C447C; color: #B5D4F4; }
+    .b-perf { background: #633806; color: #FAC775; }
+    .b-qual { background: #72243E; color: #F4C0D1; }
+    .b-cat  { background: #3C3489; color: #CECBF6; }
+    .b-text { background: #27500A; color: #C0DD97; }
+  }
+  .section-note { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px; padding: 8px 12px; border-left: 2px solid var(--color-border-secondary); }
+  .sql-block { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); border-radius: 8px; padding: 12px; overflow-x: auto; white-space: pre; color: var(--color-text-secondary); margin-top: 8px; line-height: 1.7; }
+  .kw { color: var(--color-text-info); }
+  .fn { color: #854F0B; }
+  .str { color: #3B6D11; }
+</style>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="show('time')">⏱ Time features</button>
+    <button class="tab" onclick="show('url')">🔗 URL features</button>
+    <button class="tab" onclick="show('perf')">⚡ Performance</button>
+    <button class="tab" onclick="show('qual')">✅ Quality flags</button>
+    <button class="tab" onclick="show('cat')">🏷 Categoricals</button>
+    <button class="tab" onclick="show('text')">📝 Text / SEO</button>
+    <button class="tab" onclick="show('sql')">💻 SQL snippets</button>
+  </div>
+
+  <!-- TIME -->
+  <div id="time" class="section active">
+    <div class="section-note">Derived from <code>started_at</code> and <code>ended_at</code>. All timestamps are UTC. Add to your scrape_jobs or scrape_events table.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">scrape_duration_ms</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-time">derived</span>Milliseconds from started_at → ended_at<div class="example">-- 8203 (= ended - started)</div></td></tr>
+      <tr><td class="col-name">scrape_duration_seconds</td><td><span class="dtype">FLOAT64</span></td><td class="desc"><span class="badge b-time">derived</span>Human-readable version of duration<div class="example">-- 8.203</div></td></tr>
+      <tr><td class="col-name">scrape_hour_utc</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-time">time</span>Hour (0–23) the scrape started — useful for traffic-pattern analysis<div class="example">-- 3</div></td></tr>
+      <tr><td class="col-name">scrape_day_of_week</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-time">time</span>Day of week (1=Sun … 7=Sat)<div class="example">-- 5 (Thursday)</div></td></tr>
+      <tr><td class="col-name">scrape_date</td><td><span class="dtype">DATE</span></td><td class="desc"><span class="badge b-time">time</span>Calendar date of the scrape — great for daily partitioning<div class="example">-- 2026-04-09</div></td></tr>
+      <tr><td class="col-name">scrape_week</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-time">time</span>ISO week number — rolling-window aggregations<div class="example">-- 15</div></td></tr>
+      <tr><td class="col-name">scrape_month</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-time">time</span>Month (1–12) for monthly roll-ups<div class="example">-- 4</div></td></tr>
+      <tr><td class="col-name">is_weekend</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-time">flag</span>TRUE if scrape fell on Sat/Sun<div class="example">-- FALSE</div></td></tr>
+      <tr><td class="col-name">started_at_local</td><td><span class="dtype">TIMESTAMP</span></td><td class="desc"><span class="badge b-time">time</span>started_at converted to the recorded timezone field<div class="example">-- 2026-04-08 23:37:04 ET</div></td></tr>
+    </table>
+  </div>
+
+  <!-- URL -->
+  <div id="url" class="section">
+    <div class="section-note">Parsed from <code>source_url</code>. Enables domain-level rollups, path segmentation, and protocol auditing without regex in every query.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">url_scheme</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>Protocol extracted from source_url<div class="example">-- 'https'</div></td></tr>
+      <tr><td class="col-name">url_host</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>Registered domain + TLD (no www)<div class="example">-- 'amazon.com'</div></td></tr>
+      <tr><td class="col-name">url_subdomain</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>Subdomain part only (NULL if none)<div class="example">-- 'www'</div></td></tr>
+      <tr><td class="col-name">url_path</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>Full path after the host<div class="example">-- '/gp/video/storefront/'</div></td></tr>
+      <tr><td class="col-name">url_path_depth</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-url">derived</span>Number of path segments — good proxy for page depth<div class="example">-- 3 (gp / video / storefront)</div></td></tr>
+      <tr><td class="col-name">url_path_root</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>First path segment — site section<div class="example">-- 'gp'</div></td></tr>
+      <tr><td class="col-name">url_has_query_params</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-url">flag</span>TRUE if URL contains a query string<div class="example">-- FALSE</div></td></tr>
+      <tr><td class="col-name">url_has_fragment</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-url">flag</span>TRUE if URL has a # fragment<div class="example">-- FALSE</div></td></tr>
+      <tr><td class="col-name">url_normalised</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-url">url</span>Lowercased, trailing-slash-stripped canonical form<div class="example">-- 'https://www.amazon.com/gp/video/storefront'</div></td></tr>
+      <tr><td class="col-name">og_url_matches_source</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-url">quality</span>TRUE when og_url == normalised source_url — catches redirect/canonical mismatches<div class="example">-- TRUE</div></td></tr>
+    </table>
+  </div>
+
+  <!-- PERF -->
+  <div id="perf" class="section">
+    <div class="section-note">Operational signals useful for monitoring scrape health, cost optimisation, and SLA tracking.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">is_slow_scrape</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-perf">perf</span>TRUE when duration_ms &gt; 10000 (tunable threshold)<div class="example">-- FALSE (8.2 s here)</div></td></tr>
+      <tr><td class="col-name">is_cache_hit</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-perf">perf</span>TRUE when cache_state = 'hit'<div class="example">-- FALSE</div></td></tr>
+      <tr><td class="col-name">is_concurrency_limited</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-perf">perf</span>Direct cast of concurrency_limited field<div class="example">-- FALSE</div></td></tr>
+      <tr><td class="col-name">cost_tier</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-perf">derived</span>'free', 'standard', 'premium' based on credits_used<div class="example">-- 'standard' (1 credit)</div></td></tr>
+      <tr><td class="col-name">credits_used</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-perf">raw</span>Passed through for cost roll-ups<div class="example">-- 1</div></td></tr>
+      <tr><td class="col-name">proxy_tier</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-perf">cat</span>Normalised proxy_used — 'none', 'basic', 'residential', 'stealth'<div class="example">-- 'basic'</div></td></tr>
+      <tr><td class="col-name">is_preview</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-perf">flag</span>Passed through — filter these out in production aggregations<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">http_status_class</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-perf">derived</span>'2xx', '3xx', '4xx', '5xx' bucket from status_code<div class="example">-- '2xx'</div></td></tr>
+      <tr><td class="col-name">is_success</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-perf">flag</span>TRUE when status = 'success' AND status_code BETWEEN 200 AND 299<div class="example">-- TRUE</div></td></tr>
+    </table>
+  </div>
+
+  <!-- QUALITY -->
+  <div id="qual" class="section">
+    <div class="section-note">Boolean flags that make data-quality checks trivially queryable — filter bad records or alert on them in a downstream pipeline.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">has_og_metadata</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-qual">quality</span>TRUE when og_title OR og_description is not NULL<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">has_og_image</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-qual">quality</span>TRUE when og_image is not NULL<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">title_matches_og_title</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-qual">quality</span>TRUE when page_title == og_title — mismatch can indicate templating bugs<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">description_is_duplicate</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-qual">quality</span>TRUE when page_description contains the same text twice (as in this record)<div class="example">-- TRUE (the description field repeats itself)</div></td></tr>
+      <tr><td class="col-name">has_language</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-qual">quality</span>TRUE when language is not NULL<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">language_code</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-qual">derived</span>ISO-639-1 part from language tag (split on '-')<div class="example">-- 'en'</div></td></tr>
+      <tr><td class="col-name">language_region</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-qual">derived</span>Region part from language tag (NULL if none)<div class="example">-- 'us'</div></td></tr>
+      <tr><td class="col-name">content_type_clean</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-qual">derived</span>MIME type with charset stripped<div class="example">-- 'text/html'</div></td></tr>
+      <tr><td class="col-name">charset</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-qual">derived</span>Charset extracted from content_type<div class="example">-- 'UTF-8'</div></td></tr>
+    </table>
+  </div>
+
+  <!-- CATEGORICALS -->
+  <div id="cat" class="section">
+    <div class="section-note">Low-cardinality enum columns ready for GROUP BY, PIVOT, and dashboard filters.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">endpoint_type</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>Normalised endpoint value — 'scrape', 'crawl', 'map', 'extract'<div class="example">-- 'scrape'</div></td></tr>
+      <tr><td class="col-name">og_type_clean</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>Lowercased og_type — 'website', 'article', 'product', etc.<div class="example">-- 'website'</div></td></tr>
+      <tr><td class="col-name">cache_state_bucket</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>'hit', 'miss', 'stale', 'bypass' — normalised from cache_state<div class="example">-- 'miss'</div></td></tr>
+      <tr><td class="col-name">scrape_status</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>'success', 'failed', 'timeout', 'blocked' — canonical status enum<div class="example">-- 'success'</div></td></tr>
+      <tr><td class="col-name">timezone_region</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>IANA zone continent prefix<div class="example">-- 'America'</div></td></tr>
+      <tr><td class="col-name">timezone_city</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">cat</span>IANA zone city suffix<div class="example">-- 'New_York'</div></td></tr>
+      <tr><td class="col-name">is_ecommerce_domain</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-cat">domain</span>TRUE for known e-commerce TLDs / brands (lookup table join)<div class="example">-- TRUE (amazon.com)</div></td></tr>
+      <tr><td class="col-name">domain_category</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-cat">domain</span>'ecommerce', 'news', 'social', 'reference', 'other' — from a domain-category lookup<div class="example">-- 'ecommerce'</div></td></tr>
+    </table>
+  </div>
+
+  <!-- TEXT / SEO -->
+  <div id="text" class="section">
+    <div class="section-note">Lightweight text features you can compute with BigQuery string functions — no NLP pipeline needed.</div>
+    <table>
+      <tr><th>Column name</th><th>Type</th><th>Description / Example</th></tr>
+      <tr><td class="col-name">page_title_length</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-text">text</span>Character count of page_title<div class="example">-- 54</div></td></tr>
+      <tr><td class="col-name">page_description_length</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-text">text</span>Character count of page_description<div class="example">-- 246 (note: duplicated in this record)</div></td></tr>
+      <tr><td class="col-name">title_word_count</td><td><span class="dtype">INT64</span></td><td class="desc"><span class="badge b-text">text</span>Approx word count via ARRAY_LENGTH(SPLIT(...))<div class="example">-- 9</div></td></tr>
+      <tr><td class="col-name">has_pipe_in_title</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-text">seo</span>TRUE when page_title contains ' | ' — common brand separator pattern<div class="example">-- FALSE (uses colon here)</div></td></tr>
+      <tr><td class="col-name">has_colon_in_title</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-text">seo</span>TRUE when page_title contains ': '<div class="example">-- TRUE</div></td></tr>
+      <tr><td class="col-name">title_is_seo_optimal</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-text">seo</span>TRUE when title length is between 30 and 60 chars (Google's sweet spot)<div class="example">-- TRUE (54 chars)</div></td></tr>
+      <tr><td class="col-name">description_is_seo_optimal</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-text">seo</span>TRUE when description length is between 70 and 160 chars<div class="example">-- FALSE (246 chars — too long)</div></td></tr>
+      <tr><td class="col-name">og_image_domain</td><td><span class="dtype">STRING</span></td><td class="desc"><span class="badge b-text">derived</span>Host extracted from og_image URL<div class="example">-- 'm.media-amazon.com'</div></td></tr>
+      <tr><td class="col-name">og_image_is_cdn</td><td><span class="dtype">BOOL</span></td><td class="desc"><span class="badge b-text">derived</span>TRUE when og_image host differs from source_url host (image on CDN)<div class="example">-- TRUE</div></td></tr>
+    </table>
+  </div>
+
+  <!-- SQL -->
+  <div id="sql" class="section">
+    <div class="section-note">Copy-paste BigQuery SQL for the most common feature columns. Use inside a <code>CREATE TABLE AS SELECT</code> or a <code>VIEW</code> on top of your raw table.</div>
+    <div class="sql-block"><span class="kw">SELECT</span>
+  <span class="fn">-- Time features</span>
+  <span class="fn">TIMESTAMP_DIFF</span>(ended_at, started_at, MILLISECOND)            <span class="kw">AS</span> scrape_duration_ms,
+  <span class="fn">TIMESTAMP_DIFF</span>(ended_at, started_at, MILLISECOND) / 1000.0    <span class="kw">AS</span> scrape_duration_seconds,
+  <span class="fn">EXTRACT</span>(HOUR     <span class="kw">FROM</span> started_at)                              <span class="kw">AS</span> scrape_hour_utc,
+  <span class="fn">EXTRACT</span>(DAYOFWEEK <span class="kw">FROM</span> started_at)                              <span class="kw">AS</span> scrape_day_of_week,
+  <span class="fn">DATE</span>(started_at)                                                <span class="kw">AS</span> scrape_date,
+  <span class="fn">EXTRACT</span>(ISOWEEK   <span class="kw">FROM</span> started_at)                              <span class="kw">AS</span> scrape_week,
+  <span class="fn">EXTRACT</span>(MONTH     <span class="kw">FROM</span> started_at)                              <span class="kw">AS</span> scrape_month,
+  <span class="fn">EXTRACT</span>(DAYOFWEEK <span class="kw">FROM</span> started_at) <span class="kw">IN</span> (1,7)                    <span class="kw">AS</span> is_weekend,
+
+  <span class="fn">-- URL features</span>
+  <span class="fn">REGEXP_EXTRACT</span>(source_url, <span class="str">r'^(https?)'</span>)                     <span class="kw">AS</span> url_scheme,
+  <span class="fn">NET.REG_DOMAIN</span>(source_url)                                      <span class="kw">AS</span> url_host,
+  <span class="fn">NET.HOST</span>(source_url)                                            <span class="kw">AS</span> url_host_full,
+  <span class="fn">REGEXP_EXTRACT</span>(source_url, <span class="str">r'^https?://[^/]*(/.*)$'</span>)           <span class="kw">AS</span> url_path,
+  <span class="fn">ARRAY_LENGTH</span>(<span class="fn">SPLIT</span>(<span class="fn">TRIM</span>(<span class="fn">REGEXP_EXTRACT</span>(source_url,
+    <span class="str">r'^https?://[^/]*(/.*)$'</span>), <span class="str">'/'</span>), <span class="str">'/'</span>))                       <span class="kw">AS</span> url_path_depth,
+  <span class="fn">SPLIT</span>(<span class="fn">TRIM</span>(<span class="fn">REGEXP_EXTRACT</span>(source_url,
+    <span class="str">r'^https?://[^/]*(/.*)$'</span>), <span class="str">'/'</span>), <span class="str">'/'</span>)[SAFE_OFFSET(0)]       <span class="kw">AS</span> url_path_root,
+  source_url LIKE <span class="str">'%?%'</span>                                           <span class="kw">AS</span> url_has_query_params,
+
+  <span class="fn">-- Performance features</span>
+  <span class="fn">TIMESTAMP_DIFF</span>(ended_at, started_at, MILLISECOND) > 10000       <span class="kw">AS</span> is_slow_scrape,
+  cache_state = <span class="str">'hit'</span>                                             <span class="kw">AS</span> is_cache_hit,
+  status = <span class="str">'success'</span> <span class="kw">AND</span> status_code <span class="kw">BETWEEN</span> 200 <span class="kw">AND</span> 299          <span class="kw">AS</span> is_success,
+  <span class="fn">CONCAT</span>(<span class="fn">CAST</span>(status_code / 100 <span class="kw">AS</span> <span class="fn">STRING</span>), <span class="str">'xx'</span>)               <span class="kw">AS</span> http_status_class,
+
+  <span class="fn">-- Quality flags</span>
+  (og_title <span class="kw">IS NOT NULL</span> <span class="kw">OR</span> og_description <span class="kw">IS NOT NULL</span>)            <span class="kw">AS</span> has_og_metadata,
+  og_image <span class="kw">IS NOT NULL</span>                                            <span class="kw">AS</span> has_og_image,
+  page_title = og_title                                            <span class="kw">AS</span> title_matches_og_title,
+  <span class="fn">REGEXP_EXTRACT</span>(language, <span class="str">r'^([a-z]{2,3})'</span>)                     <span class="kw">AS</span> language_code,
+  <span class="fn">REGEXP_EXTRACT</span>(language, <span class="str">r'-([A-Z]{2})$'</span>)                      <span class="kw">AS</span> language_region,
+  <span class="fn">REGEXP_EXTRACT</span>(content_type, <span class="str">r'^([^;]+)'</span>)                      <span class="kw">AS</span> content_type_clean,
+  <span class="fn">UPPER</span>(<span class="fn">REGEXP_EXTRACT</span>(content_type, <span class="str">r'charset=([^\s;]+)'</span>))     <span class="kw">AS</span> charset,
+
+  <span class="fn">-- Text / SEO features</span>
+  <span class="fn">LENGTH</span>(page_title)                                               <span class="kw">AS</span> page_title_length,
+  <span class="fn">LENGTH</span>(page_description)                                         <span class="kw">AS</span> page_description_length,
+  <span class="fn">ARRAY_LENGTH</span>(<span class="fn">SPLIT</span>(<span class="fn">TRIM</span>(page_title), <span class="str">' '</span>))                    <span class="kw">AS</span> title_word_count,
+  page_title LIKE <span class="str">'%:%'</span>                                           <span class="kw">AS</span> has_colon_in_title,
+  <span class="fn">LENGTH</span>(page_title) <span class="kw">BETWEEN</span> 30 <span class="kw">AND</span> 60                             <span class="kw">AS</span> title_is_seo_optimal,
+  <span class="fn">LENGTH</span>(page_description) <span class="kw">BETWEEN</span> 70 <span class="kw">AND</span> 160                    <span class="kw">AS</span> description_is_seo_optimal,
+  <span class="fn">NET.HOST</span>(og_image)                                              <span class="kw">AS</span> og_image_domain,
+  <span class="fn">NET.HOST</span>(og_image) != <span class="fn">NET.HOST</span>(source_url)                     <span class="kw">AS</span> og_image_is_cdn,
+
+  <span class="fn">-- Categoricals</span>
+  <span class="fn">LOWER</span>(og_type)                                                   <span class="kw">AS</span> og_type_clean,
+  <span class="fn">LOWER</span>(status)                                                    <span class="kw">AS</span> scrape_status,
+  <span class="fn">SPLIT</span>(timezone, <span class="str">'/'</span>)[SAFE_OFFSET(0)]                           <span class="kw">AS</span> timezone_region,
+  <span class="fn">SPLIT</span>(timezone, <span class="str">'/'</span>)[SAFE_OFFSET(1)]                           <span class="kw">AS</span> timezone_city,
+
+  <span class="fn">-- All original columns</span>
+  *
+
+<span class="kw">FROM</span> `your_project.your_dataset.firecrawl_raw`</div>
+  </div>
+</div>
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
